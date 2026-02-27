@@ -1,0 +1,26 @@
+[
+  {
+    "code": "7308",
+    "station_name": "Ходжадавлет (эксп.)",
+    "isBorderPoint": true,
+    "otd": 3
+  },
+  {
+    "code": "7309",
+    "station_name": "Кармана",
+    "isBorderPoint": false,
+    "otd": 3
+  },
+  {
+    "code": "7310",
+    "station_name": "Кызылтепа",
+    "isBorderPoint": false,
+    "otd": 3
+  },
+  {
+    "code": "7312",
+    "station_name": "Бинокор (рзд)",
+    "isBorderPoint": false,
+    "otd": 3
+  }
+]

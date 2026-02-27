@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ЖД Аналитика</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+    <!-- Inter Font (Variable Weight for better precision) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
+
+    <style>
+      :root {
+        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      html, body, #root {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background-color: #F8FAFC; /* Slate 50 */
+        color: #1e293b; /* Slate 800 */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+        /* Subtle noise texture for premium feel */
+        background-image: radial-gradient(rgba(203, 213, 225, 0.3) 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+
+      /* Premium Invisible/Minimal Scrollbar (Mac-like) */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.4);
+        border-radius: 100vh;
+        border: 2px solid transparent;
+        background-clip: content-box;
+        transition: background 0.3s;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(100, 116, 139, 0.7);
+      }
+
+      /* Leaflet Modernization */
+      .leaflet-container {
+        font-family: var(--font-sans) !important;
+        background: #f1f5f9 !important;
+      }
+      .custom-marker-icon, .drag-marker, .vertex-marker, .custom-admin-marker {
+        background: transparent;
+        border: none;
+      }
+      /* Modern Tooltip */
+      .leaflet-tooltip {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid rgba(226, 232, 240, 0.8) !important; /* Slate 200 */
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(8px) !important;
+        padding: 6px 10px !important;
+        font-weight: 600 !important;
+        color: #334155 !important; /* Slate 700 */
+      }
+      
+      /* Premium Glassmorphism Utilities */
+      .glass {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+      }
+      
+      .glass-dark {
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Loading Animation */
+      #initial-loader {
+        position: fixed;
+        inset: 0;
+        background: #ffffff;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.6s ease-out;
+      }
+      .loader-spinner {
+        width: 48px;
+        height: 48px;
+        border: 3px solid rgba(59, 130, 246, 0.1);
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* Print Styles */
+      @media print {
+        @page {
+          size: landscape;
+          margin: 10mm;
+        }
+        
+        body {
+          background: white !important;
+          background-image: none !important;
+          color: black !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+        }
+
+        /* Hide everything except the printable area */
+        aside, 
+        nav,
+        .sidebar,
+        .print\:hidden,
+        button,
+        .no-print {
+          display: none !important;
+        }
+
+        #root, main, .flex-1 {
+          display: block !important;
+          overflow: visible !important;
+          height: auto !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          position: static !important;
+        }
+
+        .printable-area {
+          display: block !important;
+          position: static !important;
+          width: 100% !important;
+          height: auto !important;
+          overflow: visible !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        .overflow-auto, .overflow-x-auto {
+          overflow: visible !important;
+          height: auto !important;
+        }
+
+        table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          table-layout: auto !important;
+        }
+
+        th, td {
+          border: 1px solid #ddd !important;
+          padding: 4px !important;
+          font-size: 8pt !important;
+        }
+
+        .rounded-3xl, .rounded-2xl, .rounded-xl, .rounded-lg {
+          border-radius: 0 !important;
+        }
+
+        .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+          box-shadow: none !important;
+        }
+
+        .bg-slate-900 {
+          background-color: #1e293b !important;
+          color: white !important;
+          -webkit-print-color-adjust: exact;
+        }
+        
+        .bg-amber-600 {
+          background-color: #d97706 !important;
+          color: white !important;
+          -webkit-print-color-adjust: exact;
+        }
+
+        .bg-blue-600 {
+          background-color: #2563eb !important;
+          color: white !important;
+          -webkit-print-color-adjust: exact;
+        }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "recharts": "https://esm.sh/recharts@^3.7.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
+    "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
+    "firebase/": "https://esm.sh/firebase@^12.8.0/",
+    "mammoth": "https://esm.sh/mammoth@1.6.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="initial-loader">
+      <div class="loader-spinner"></div>
+    </div>
+    <div id="root"></div>
+    <script>
+      // Remove loader when React mounts
+      window.onload = function() {
+        setTimeout(() => {
+          const loader = document.getElementById('initial-loader');
+          if(loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 600);
+          }
+        }, 300);
+      };
+    </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
